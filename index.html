@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secure Block Storage</title>
+<style>
+  :root{
+    --bg:#f5f7fb;--surface:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;
+    --brand:#4f46e5;--brand2:#06b6d4;--ok-bg:#dcfce7;--ok:#166534;--warn-bg:#fef3c7;--warn:#92400e;
+    --term:#0b1020;--term-text:#7ef0c3;--shadow:0 10px 30px -12px rgba(15,23,42,.18)
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0b1020;--surface:#131a2e;--text:#e6eaf5;--muted:#93a0bd;--line:#232c47;
+      --ok-bg:#12352a;--ok:#86efac;--warn-bg:#3a2e12;--warn:#fcd34d;--term:#070b16;--shadow:0 10px 30px -12px #000}
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:0 18px}
+  nav{position:sticky;top:0;z-index:5;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  nav b{display:flex;align-items:center;gap:8px}
+  nav .links a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:14px}
+  nav .links a:hover{color:var(--brand)}
+  .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center}
+  .hero{padding:64px 0 40px;text-align:center}
+  .hero h1{font-size:clamp(32px,6vw,52px);line-height:1.1;margin:0 0 14px;letter-spacing:-.02em}
+  .grad{background:linear-gradient(90deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);max-width:620px;margin:0 auto 22px;font-size:18px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .badge{font-size:13px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted)}
+  section{padding:36px 0}
+  h2{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 20px}
+  .grid{display:grid;gap:14px}
+  .steps{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .team{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .demo{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .step .n{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;margin-bottom:10px}
+  .step h3,.card h3{margin:0 0 4px;font-size:16px}
+  .step p,.card p{margin:0;color:var(--muted);font-size:14px}
+  .avatar{width:44px;height:44px;border-radius:50%;background:var(--line);margin-bottom:10px}
+  #mode{display:inline-block;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;margin-bottom:16px}
+  #mode.mock{background:var(--warn-bg);color:var(--warn)}
+  #mode.live{background:var(--ok-bg);color:var(--ok)}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+  input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+  input:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:transparent}
+  input[type=file]::file-selector-button{font:inherit;margin-right:12px;padding:6px 12px;border:0;border-radius:8px;background:var(--line);color:var(--text);cursor:pointer}
+  button{width:100%;margin-top:16px;font:inherit;font-weight:600;padding:12px;border:0;border-radius:10px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--brand),var(--brand2));transition:transform .1s,opacity .2s}
+  button:hover{opacity:.92} button:active{transform:scale(.98)}
+  button.secondary{background:transparent;color:var(--brand);border:1.5px solid var(--brand);margin-top:10px}
+  input{height:44px}
+  .demo .card{display:flex;flex-direction:column}
+  .note{margin-top:auto;padding:12px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--muted)}
+  .diagram .scroll{overflow-x:auto}
+  .diagram svg{display:block;min-width:640px;width:100%;height:auto}
+  .diagram svg text{font-family:inherit}
+  .line{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:7 7;animation:dash 1s linear infinite}
+  .line.up{stroke:var(--brand)}.line.down{stroke:var(--brand2)}
+  @keyframes dash{to{stroke-dashoffset:-14}}
+  .node{fill:var(--bg);stroke:var(--line);stroke-width:2}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:14px;font-size:13px;color:var(--muted)}
+  .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .sw.up{background:var(--brand)}.sw.down{background:var(--brand2)}
+  @media (prefers-reduced-motion:reduce){.line{animation:none}}
+  #save{display:none;margin-top:14px;text-align:center;padding:10px;border:1px dashed var(--brand);border-radius:10px;color:var(--brand);text-decoration:none;font-weight:600}
+  .term{margin-top:18px;border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .term .bar{background:#1c2540;padding:8px 12px;display:flex;gap:6px;align-items:center;color:#93a0bd;font-size:12px}
+  .dot{width:10px;height:10px;border-radius:50%;background:#ff5f57}.dot:nth-child(2){background:#febc2e}.dot:nth-child(3){background:#28c840}
+  .term span.t{margin-left:8px}
+  pre#log{margin:0;padding:14px;background:var(--term);color:var(--term-text);font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all;min-height:110px;max-height:280px;overflow:auto}
+  pre#log:empty::before{content:"> waiting for activity...";opacity:.5}
+  footer{padding:30px 0 50px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:20px}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <b><span class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>BlockVault</b>
+  <div class="links"><a href="#docs">How it works</a><a href="#arch">Architecture</a><a href="#about">About</a><a href="#demo">Demo</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <h1>Encrypted file storage,<br><span class="grad">split into blocks.</span></h1>
+  <p>Files are chunked and encrypted in your browser, stored on cloud object storage, and delivered worldwide over a CDN with HTTPS.</p>
+  <div class="badges"><span class="badge">AES-256-GCM</span><span class="badge">1 MB blocks</span><span class="badge">Amazon S3</span><span class="badge">CloudFront CDN</span><span class="badge">HTTPS</span></div>
+</div></header>
+
+<section id="docs"><div class="wrap">
+  <h2>How it works</h2>
+  <p class="sub">The cloud only ever stores ciphertext. Your passphrase never leaves the browser.</p>
+  <div class="grid steps">
+    <div class="card step"><div class="n">1</div><h3>Split</h3><p>The file is cut into 1 MB blocks.</p></div>
+    <div class="card step"><div class="n">2</div><h3>Derive key</h3><p>PBKDF2 (SHA-256, 200k rounds) turns your passphrase into a key.</p></div>
+    <div class="card step"><div class="n">3</div><h3>Encrypt</h3><p>Each block gets AES-256-GCM with a unique IV, bound to its index.</p></div>
+    <div class="card step"><div class="n">4</div><h3>Upload</h3><p>Blocks and a manifest go to S3 via short-lived presigned URLs.</p></div>
+    <div class="card step"><div class="n">5</div><h3>Download</h3><p>Fetched through CloudFront, decrypted, reassembled, and hash-verified.</p></div>
+  </div>
+</div></section>
+
+<section id="arch"><div class="wrap">
+  <h2>Architecture</h2>
+  <p class="sub">Follow the moving blocks. Upload goes straight to S3; download comes back through the CDN.</p>
+  <div class="card diagram"><div class="scroll">
+  <svg viewBox="0 0 900 390" role="img" aria-label="Architecture: browser, Lambda, S3 and CloudFront">
+    <defs>
+      <path id="pReq" d="M110 150 C110 55 230 55 360 55"/>
+      <path id="pRes" d="M360 55 C230 55 110 55 110 150"/>
+      <path id="pUp" d="M110 240 C110 365 800 365 800 240"/>
+      <path id="pDown" d="M710 195 L200 195"/>
+    </defs>
+
+    <use href="#pReq" class="line up"/>
+    <use href="#pUp" class="line up"/>
+    <use href="#pDown" class="line down"/>
+
+    <circle r="7" fill="#4f46e5"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#pReq"/></animateMotion></circle>
+    <circle r="7" fill="#f59e0b"><animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite"><mpath href="#pRes"/></animateMotion></circle>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#4f46e5"><animateMotion dur="3.6s" begin="0s" repeatCount="indefinite"><mpath href="#pUp"/></animateMotion></rect>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#4f46e5"><animateMotion dur="3.6s" begin="1.2s" repeatCount="indefinite"><mpath href="#pUp"/></animateMotion></rect>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#4f46e5"><animateMotion dur="3.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#pUp"/></animateMotion></rect>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#06b6d4"><animateMotion dur="3s" begin="0s" repeatCount="indefinite"><mpath href="#pDown"/></animateMotion></rect>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#06b6d4"><animateMotion dur="3s" begin="1s" repeatCount="indefinite"><mpath href="#pDown"/></animateMotion></rect>
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#06b6d4"><animateMotion dur="3s" begin="2s" repeatCount="indefinite"><mpath href="#pDown"/></animateMotion></rect>
+
+    <rect class="node" x="20" y="150" width="180" height="90" rx="14"/>
+    <text x="110" y="187" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text)">Browser</text>
+    <text x="110" y="209" text-anchor="middle" font-size="13" fill="var(--muted)">split · encrypt</text>
+    <text x="110" y="226" text-anchor="middle" font-size="13" fill="var(--muted)">decrypt · verify</text>
+
+    <rect class="node" x="360" y="20" width="180" height="70" rx="14"/>
+    <text x="450" y="52" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text)">AWS Lambda</text>
+    <text x="450" y="73" text-anchor="middle" font-size="13" fill="var(--muted)">signs upload URLs</text>
+
+    <rect class="node" x="360" y="150" width="180" height="90" rx="14"/>
+    <text x="450" y="187" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text)">CloudFront</text>
+    <text x="450" y="209" text-anchor="middle" font-size="13" fill="var(--muted)">CDN · HTTPS</text>
+    <text x="450" y="226" text-anchor="middle" font-size="13" fill="var(--muted)">global edge cache</text>
+
+    <rect class="node" x="710" y="150" width="180" height="90" rx="14"/>
+    <text x="800" y="187" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text)">Amazon S3</text>
+    <text x="800" y="209" text-anchor="middle" font-size="13" fill="var(--muted)">encrypted blocks</text>
+    <text x="800" y="226" text-anchor="middle" font-size="13" fill="var(--muted)">+ manifest.json</text>
+
+    <text x="250" y="36" font-size="13" font-weight="600" fill="var(--brand)">1  ask for upload URL</text>
+    <text x="450" y="378" text-anchor="middle" font-size="14" font-weight="600" fill="var(--brand)">2  PUT encrypted blocks (presigned URL)</text>
+    <text x="625" y="180" text-anchor="middle" font-size="13" font-weight="600" fill="#0891b2">3  GET over HTTPS</text>
+    <text x="280" y="180" text-anchor="middle" font-size="13" font-weight="600" fill="#0891b2">ciphertext</text>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><i class="sw up"></i>Upload: the browser encrypts each block, then PUTs it straight to S3</span>
+    <span><i class="sw down"></i>Download: S3 to CloudFront to browser, which decrypts</span>
+  </div>
+  <div class="legend"><span>Lambda only signs URLs. It never sees your file or your passphrase.</span></div>
+  </div>
+</div></section>
+
+<section id="about"><div class="wrap">
+  <h2>About the team</h2>
+  <p class="sub">EDIT ME: replace the names, roles and this summary with your own.</p>
+  <div class="grid team">
+    <div class="card"><div class="avatar"></div><h3>Member One</h3><p>Cloud setup: S3, IAM</p></div>
+    <div class="card"><div class="avatar"></div><h3>Member Two</h3><p>CDN and HTTPS: CloudFront</p></div>
+    <div class="card"><div class="avatar"></div><h3>Member Three</h3><p>Encryption and chunking</p></div>
+    <div class="card"><div class="avatar"></div><h3>Member Four</h3><p>Frontend and documentation</p></div>
+  </div>
+</div></section>
+
+<section id="demo"><div class="wrap">
+  <h2>Live demo</h2>
+  <p class="sub">Upload a file, then download it back and verify it matches.</p>
+  <span id="mode"></span>
+
+  <div class="grid demo">
+    <div class="card">
+      <h3>1. Upload</h3><p>Split, encrypt and store a file.</p>
+      <label for="file">File</label><input type="file" id="file">
+      <label for="pass">Passphrase</label><input type="password" id="pass" placeholder="Choose a passphrase">
+      <button id="up">Split, encrypt &amp; upload</button>
+      <div class="note">Every block is encrypted on your device before it is uploaded. Keep demo files under about 50 MB.</div>
+    </div>
+    <div class="card">
+      <h3>2. Download</h3><p>Fetch ciphertext, decrypt and verify.</p>
+      <label for="fid">File ID</label><input id="fid" placeholder="Shown after upload">
+      <label for="pass2">Passphrase</label><input type="password" id="pass2" placeholder="Same passphrase">
+      <button id="down">Download, decrypt &amp; verify</button>
+      <button id="rawdown" class="secondary">Download encrypted blocks (.zip)</button>
+      <a id="save">Save file</a>
+    </div>
+  </div>
+
+  <div class="term">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="t">activity log</span></div>
+    <pre id="log"></pre>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Built with Web Crypto, Amazon S3 and CloudFront.</div></footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
