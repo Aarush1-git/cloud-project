@@ -54,6 +54,11 @@
   button.secondary{background:transparent;color:var(--brand);border:1.5px solid var(--brand);margin-top:10px}
   input{height:44px}
   .demo .card{display:flex;flex-direction:column}
+  .result{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding:12px;border-radius:10px;background:var(--ok-bg);color:var(--ok);font-size:14px}
+  .result[hidden]{display:none}
+  .result code{font:600 16px ui-monospace,Menlo,Consolas,monospace;user-select:all}
+  .result button{width:auto;margin:0 0 0 auto;padding:6px 14px;font-size:13px}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
   .note{margin-top:auto;padding:12px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--muted)}
   .diagram .scroll{overflow-x:auto}
   .diagram svg{display:block;min-width:640px;width:100%;height:auto}
@@ -181,6 +186,7 @@
       <label for="file">File</label><input type="file" id="file">
       <label for="pass">Passphrase</label><input type="password" id="pass" placeholder="Choose a passphrase">
       <button id="up">Split, encrypt &amp; upload</button>
+      <div class="result" id="result" hidden><span>Your File ID: <code id="rid"></code></span><button id="copy" type="button">Copy</button></div>
       <div class="note">Every block is encrypted on your device before it is uploaded. Keep demo files under about 50 MB.</div>
     </div>
     <div class="card">
@@ -189,6 +195,7 @@
       <label for="pass2">Passphrase</label><input type="password" id="pass2" placeholder="Same passphrase">
       <button id="down">Download, decrypt &amp; verify</button>
       <button id="rawdown" class="secondary">Download encrypted blocks (.zip)</button>
+      <p class="hint">The .zip is ciphertext only, so it needs no passphrase.</p>
       <a id="save">Save file</a>
     </div>
   </div>
