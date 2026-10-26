@@ -77,9 +77,25 @@ function zip(files) {
 }
 // ZIP-END
 
+function hideSave() {
+  const a = $('save');
+  if (a.href && a.href.startsWith('blob:')) URL.revokeObjectURL(a.href);
+  a.removeAttribute('href'); a.style.display = 'none';
+}
+const fresh = () => { $('log').textContent = ''; hideSave(); };
+$('copy').onclick = async () => {
+  const id = $('rid').textContent;
+  try { await navigator.clipboard.writeText(id); $('copy').textContent = 'Copied'; }
+  catch { prompt('Copy your File ID:', id); }
+  setTimeout(() => { $('copy').textContent = 'Copy'; }, 1500);
+};
+$('pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('up').click(); });
+['fid', 'pass2'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') $('down').click(); }));
+
 $('up').onclick = async () => {
   const f = $('file').files[0], pass = $('pass').value;
   if (!f || !pass) return alert('Pick a file and enter a passphrase');
+  fresh(); $('result').hidden = true;
   try {
     const id = crypto.randomUUID().slice(0, 8);
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -103,12 +119,14 @@ $('up').onclick = async () => {
     await retry(() => put(`files/${id}/manifest.json`, enc.encode(JSON.stringify(manifest)).buffer));
     log(`DONE. File ID: ${id}`);
     $('fid').value = id;
+    $('rid').textContent = id; $('result').hidden = false;
   } catch (e) { log('ERROR: ' + e.message); }
 };
 
 $('down').onclick = async () => {
   const id = $('fid').value.trim(), pass = $('pass2').value;
   if (!id || !pass) return alert('Enter file ID and passphrase');
+  fresh();
   try {
     const m = JSON.parse(new TextDecoder().decode(await get(`files/${id}/manifest.json`)));
     const key = await keyFrom(pass, unb64(m.salt));
